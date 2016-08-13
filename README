@@ -1,0 +1,8 @@
+# Requirements
+- nodejs
+
+# Setup
+Run command from command line at the project directory: `npm install`
+
+# Run
+Run command from command line at the project directory: `npm start`
