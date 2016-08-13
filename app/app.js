@@ -1,21 +1,25 @@
 'use strict';
 
-// Declare app level module which depends on views, and components
-angular.module('gmailChecker', [
-  'ngCookies',
-  'ui.router',
-  'angular-google-gapi',
-  'gmailChecker.router',
-  'gmailChecker.controller'
-]).
-run(['GAuth', 'GApi', 'GData', '$rootScope', '$window', '$state',
-	function(GAuth, GApi, GData, $rootScope, $window, $state) {
-		$rootScope.gdata = GData;
+var module = angular.module('gmailChecker', [
+    'ngCookies',
+    'ui.router',
+    'angular-google-gapi',
+    'ngStorage',
+
+    'gmailChecker.router',
+    'gmailChecker.controller',
+    'Messages'
+]);
+
+module.run(['GAuth', 'GApi', 'GData', '$rootScope', '$window', '$state', '$cookies', 
+    function(GAuth, GApi, GData, $rootScope, $window, $state, $cookies) {
+        $rootScope.gdata = GData;
 
         var CLIENT = '630375832656-7e88ud0mb39o3v3agfu2d1qel3a88ps2.apps.googleusercontent.com';
         var SCOPE = [
-        	"https://www.googleapis.com/auth/userinfo.email",
-        	"https://www.googleapis.com/auth/gmail.readonly"
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.modify"
         ];
         SCOPE = SCOPE.join(" ");
 
@@ -23,16 +27,22 @@ run(['GAuth', 'GApi', 'GData', '$rootScope', '$window', '$state',
 
         GAuth.setClient(CLIENT);
         GAuth.setScope(SCOPE);
-	    // GAuth.load();
 
-        GAuth.checkAuth().then(
-            function (user) {
-                console.log(user.name + 'is login')
-            },
-            function() {
-            	$state.go("login");
-            }
-        );
+        var currentUser = $cookies.get('userId');
+        if(currentUser) {
+            GData.setUserId(currentUser);
+            GAuth.checkAuth().then(
+                function () {
+                    if($state.includes('login'))
+                        $state.go('home');
+                },
+                function() {
+                    $state.go('login');
+                }
+            );
+        } else {
+            $state.go('login');
+        }
 
         $rootScope.logout = function() {
             GAuth.logout().then(function () {

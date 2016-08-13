@@ -1,3 +1,26 @@
 <div class="jumbotron">
-	<h1>Home page</h1>
+    <h1>Report</h1>
+    <div class="row">
+        <div class="span1">Last load: {{ reportResult.lastLoad | date:"medium" }}</div>
+    </div>
+    <div class="row">
+        <div class="span1">Updating UI every: <input type="number" ng-model="storage.updateUiInterval" min="0"> min</div>
+        <div class="span1">Load messages every: <input type="number" ng-model="storage.updateInterval" min="0"> min</div>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>1 hour</th>
+                <th>6 hours</th>
+                <th>24 hours</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ reportResult.one }}</td>
+                <td>{{ reportResult.six }}</td>
+                <td>{{ reportResult.twentyFour }}</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
