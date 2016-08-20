@@ -1,1 +1,1 @@
-web: npm start
+web: http-server -p $PORT -c-1 ./app
