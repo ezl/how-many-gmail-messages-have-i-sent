@@ -17,9 +17,9 @@ router
                     views :  {
                         '': {
                             templateUrl: 'partials/login.html',
-                            controller: 'gmailChecker.controller.login',
-                        },
-                    },
+                            controller: 'gmailChecker.controller.login'
+                        }
+                    }
                 })
 
                 .state('home', {
@@ -27,8 +27,8 @@ router
                     views :  {
                         '': {
                             controller: 'gmailChecker.controller.home',
-                            templateUrl: 'partials/home.html',
-                        },
-                    },
+                            templateUrl: 'partials/home.html'
+                        }
+                    }
                 })
-    }])
+    }]);

@@ -2,21 +2,30 @@ angular.module('Messages', [])
 .factory("Messages", ["$q", "$cookies", "GApi", "$sessionStorage", '$interval',
     function($q, $cookies, GApi, $sessionStorage, $interval){
         var query = "newer_than:1d in:sent";
-        var userId = $cookies.get('userId');
-        var params = {'userId': userId, 'q': query};
-        var messageListPromise = GApi.executeAuth("gmail", "users.messages.list", params);
         var errorHandler = function (reject) { return function(error){ return reject(error); }};
-
-        var storage = $sessionStorage.$default({
+        var scheduler = null;
+        var defaultStorage = {
             "lastLoad": null,
             "messages": [],
-            "updateInterval": 1,
-            "updateUiInterval": 5
-        });
+            "updateInterval": 5,
+            "aggregated": {"one": 0, "six": 0, "twentyFour": 0}
+        };
+
+        var storage = $sessionStorage.$default(defaultStorage);
 
         // API methods and helpers
+        var updateStorage = function () {
+            messagesList().then(function (messages) {
+                console.debug("storage is updated");
+                storage.messages = messages;
+                storage.lastLoad = new Date();
+                aggregate();
+            });
+
+        };
+
         var getMessage = function(messageId) {
-            var params = {"id": messageId, "userId": userId};
+            var params = {"id": messageId, "userId": $cookies.get('userId')};
             return GApi.executeAuth("gmail", "users.messages.get", params);
         };
 
@@ -27,10 +36,13 @@ angular.module('Messages', [])
                 $q.all(_.map(ids, getMessage)).then(function(messages){ resolve(messages) }, errorHandler(reject));
             };
 
+            var params = {'userId': $cookies.get('userId'), 'q': query};
+            var messageListPromise = GApi.executeAuth("gmail", "users.messages.list", params);
+
             messageListPromise.then(messagesListHandler, errorHandler(reject));
         });};
 
-        var messagesReport = function(){ return $q(function(resolve, reject) {
+        var aggregate = function(){
             // report periods: 1 hour, 6 hour, 24 hour
             var one_hour_count = 0, six_hours_count = 0, more_6_hours_count = 0;
             var currentTimestamp = new Date().getTime();
@@ -50,34 +62,41 @@ angular.module('Messages', [])
                 }
             });
 
-            resolve({
+
+            storage["aggregated"] = {
                 'one': one_hour_count,
                 'six': six_hours_count,
-                'twentyFour': (more_6_hours_count + six_hours_count + one_hour_count),
-                'lastLoad': storage.lastLoad
-            });
-        }); };
+                'twentyFour': (more_6_hours_count + six_hours_count + one_hour_count)
+            };
+        };
+
+        var messagesReset = function () {
+            storage.$reset(defaultStorage);
+            stopSync();
+        };
+
+        var stopSync = function () {
+            console.debug("stop sync");
+            if (!scheduler) return;
+            $interval.cancel(scheduler);
+        };
+
+        var startSync = function () {
+            stopSync();
+            console.debug("start sync");
+
+            console.debug("load storage");
+            updateStorage();
+            scheduler = $interval(updateStorage, storage.updateInterval * 60 * 1000);
+        };
+
         // end API methods and helpers
 
-        // init
-        messagesList().then(function (messages) {
-            storage.messages = messages;
-            storage.lastLoad = new Date();
-        });
-
-        // setup scheduler for updating messages
-        $interval(function () {
-            messagesList().then(function (messages) {
-                storage.messages = messages;
-                storage.lastLoad = new Date();
-            });
-
-        }, storage.updateInterval * 60 * 1000);
-
         return {
-            "list": function () { return storage.messages; },
-            "report": messagesReport,
-            "storage": storage
+            "reset": messagesReset,
+            "storage": storage,
+            "startSync": startSync,
+            "stopSync": stopSync
         };
     }
 ]);

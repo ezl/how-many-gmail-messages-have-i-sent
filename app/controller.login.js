@@ -1,10 +1,10 @@
 var controller = angular.module('gmailChecker.controller.login', []);
 
-controller.controller('gmailChecker.controller.login', ['$scope', 'GAuth', 'GData', '$state', '$cookies',
-    function clientList($scope, GAuth, GData, $state, $cookies) {
-    	if(GData.isLogin()){
-    		$state.go('home');
-    	}
+controller.controller('gmailChecker.controller.login', ['$scope', 'GAuth', 'GData', '$state', '$cookies', '$timeout',
+    function loginCtl($scope, GAuth, GData, $state, $cookies, $timeout) {
+        if(GData.isLogin()){
+            $state.go('home');
+        }
 
         var ifLogin = function() {
             $cookies.put('userId', GData.getUserId());
@@ -12,16 +12,19 @@ controller.controller('gmailChecker.controller.login', ['$scope', 'GAuth', 'GDat
         };
 
         $scope.doLogin = function() {
-                GAuth.checkAuth().then(
-                    function () {
+            GAuth.checkAuth().then(
+                function () {
+                    console.debug("auth checked");
+                    ifLogin();
+                },
+                function() {
+                    console.debug("do auth checking");
+                    GAuth.login().then(function(){
+                        console.debug("auth checked");
                         ifLogin();
-                    },
-                    function() {
-                        GAuth.login().then(function(){
-                            ifLogin();
-                        });
-                    }
-                );
+                    });
+                }
+            );
         };
     }
-])
+]);

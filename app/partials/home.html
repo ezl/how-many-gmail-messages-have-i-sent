@@ -1,11 +1,10 @@
 <div class="jumbotron">
     <h1>Report</h1>
     <div class="row">
-        <div class="span1">Last load: {{ reportResult.lastLoad | date:"medium" }}</div>
+        <div class="span1">Last load: {{ storage.lastLoad | date:"medium" }}</div>
     </div>
     <div class="row">
-        <div class="span1">Updating UI every: <input type="number" ng-model="storage.updateUiInterval" min="0"> min</div>
-        <div class="span1">Load messages every: <input type="number" ng-model="storage.updateInterval" min="0"> min</div>
+        <div class="span1">Load messages every: <input type="number" ng-model="storage.updateInterval" min="1"> min</div>
     </div>
     <table class="table">
         <thead>
@@ -17,9 +16,9 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ reportResult.one }}</td>
-                <td>{{ reportResult.six }}</td>
-                <td>{{ reportResult.twentyFour }}</td>
+                <td>{{ storage.aggregated.one }}</td>
+                <td>{{ storage.aggregated.six }}</td>
+                <td>{{ storage.aggregated.twentyFour }}</td>
             </tr>
         </tbody>
     </table>
