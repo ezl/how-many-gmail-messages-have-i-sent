@@ -14,8 +14,13 @@ var module = angular.module('gmailChecker', [
 module.run(['GAuth', 'GApi', 'GData', '$rootScope', '$window', '$state', '$cookies', 'Messages',
     function(GAuth, GApi, GData, $rootScope, $window, $state, $cookies, Messages) {
         $rootScope.gdata = GData;
+        var CLIENT;
 
-        var CLIENT = '630375832656-7e88ud0mb39o3v3agfu2d1qel3a88ps2.apps.googleusercontent.com';
+        if (window.location.domain == "localhost"){
+            CLIENT = '630375832656-7e88ud0mb39o3v3agfu2d1qel3a88ps2.apps.googleusercontent.com';
+        }else{
+            CLIENT = "630375832656-1omrp5kvpddd3lmqmfp0fklb9gt239b7.apps.googleusercontent.com";
+        }
         var SCOPE = [
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/gmail.readonly",
