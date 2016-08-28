@@ -1,12 +1,9 @@
 var controller = angular.module('gmailChecker.controller.home', []);
 
-controller.controller('gmailChecker.controller.home', ['$scope', '$cookies', 'GApi', 'Messages', '$state',
-    function homeCtl($scope, $cookies, GApi, Messages, $state) {
-        // todo: there is a better place for this checking - routing
-        if (!$cookies.get("userId")) $state.go("login");
-
+controller.controller('gmailChecker.controller.home', ['$scope', '$cookies', 'GApi', 'GData', 'GAuth', 'Messages',
+    function homeCtl($scope, $cookies, GApi, GData, GAuth, Messages) {
         Messages.startSync();
 
-        $scope.storage = Messages.storage;
+        $scope.messages = Messages;
     }
 ]);

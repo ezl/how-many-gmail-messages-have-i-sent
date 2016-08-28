@@ -3,7 +3,7 @@ var router = angular.module('gmailChecker.router', []);
 router
     .config(['$urlRouterProvider',
         function($urlRouterProvider) {
-            $urlRouterProvider.otherwise("/login");
+            $urlRouterProvider.otherwise("/");
         }]);
 
 router
