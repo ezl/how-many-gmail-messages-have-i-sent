@@ -6,10 +6,11 @@
 
     <div class="row" ng-repeat="user in messages.storage.users">
         <div class="span1">Last load: {{ messages.storage.lastLoad[user.id] | date:"medium" }}</div>
-        <div class="span1">User: {{ user.name }} {{ user.id }} <a href="" ng-click="messages.removeUser(user.id)" class="btn btn-danger">remove</a> </div>
+        <div class="span1">User: {{ user.name }} <span class="glyphicon glyphicon-trash" ng-click="messages.removeUser(user.id)"></span></div>
         <table class="table">
             <thead>
                 <tr>
+                    <th>type</th>
                     <th>1 hour</th>
                     <th>6 hours</th>
                     <th>24 hours</th>
@@ -17,9 +18,22 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ messages.storage.aggregated[user.id].one }}</td>
-                    <td>{{ messages.storage.aggregated[user.id].six }}</td>
-                    <td>{{ messages.storage.aggregated[user.id].twentyFour }}</td>
+                    <td>sent</td>
+                    <td>{{ messages.storage.aggregated['sent'][user.id].one }}</td>
+                    <td>{{ messages.storage.aggregated['sent'][user.id].six }}</td>
+                    <td>{{ messages.storage.aggregated['sent'][user.id].twentyFour }}</td>
+                </tr>
+                <tr>
+                    <td>inbox</td>
+                    <td>{{ messages.storage.aggregated['inbox'][user.id].one }}</td>
+                    <td>{{ messages.storage.aggregated['inbox'][user.id].six }}</td>
+                    <td>{{ messages.storage.aggregated['inbox'][user.id].twentyFour }}</td>
+                </tr>
+                <tr>
+                    <td>unread</td>
+                    <td>{{ messages.storage.aggregated['unread'][user.id].one }}</td>
+                    <td>{{ messages.storage.aggregated['unread'][user.id].six }}</td>
+                    <td>{{ messages.storage.aggregated['unread'][user.id].twentyFour }}</td>
                 </tr>
             </tbody>
         </table>

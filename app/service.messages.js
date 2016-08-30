@@ -1,15 +1,22 @@
 angular.module('Messages', [])
 .factory("Messages", ["$q", "$cookies", "GApi", "GData", "GAuth", "$sessionStorage", '$interval',
     function($q, $cookies, GApi, GData, GAuth, $sessionStorage, $interval){
-        var query = "newer_than:1d in:sent";
+        var sent_query = "newer_than:1d in:sent";
+        var unread_query = "newer_than:1d in:unread";
+        var inbox_query = "newer_than:1d in:inbox";
+
         var errorHandler = function (reject) { return function(error){ return reject(error); }};
         var scheduler = null;
         var defaultStorage = {
             "lastLoad": {},
             "users": [],
             "messages": {},
-            "updateInterval": 1,
-            "aggregated": {}
+            "inbox_count": {},
+            "unread_count": {},
+            "aggregated": {
+                "sent": {}, "inbox": {}, "unread": {}
+            },
+            "updateInterval": 1
         };
 
         var storage = $sessionStorage.$default(defaultStorage);
@@ -24,13 +31,20 @@ angular.module('Messages', [])
                 GData.setUserId(user.id);
 
                 GAuth.checkAuth().then(function () {
-                    messagesList(user.id).then(function (messages) {
-                        storage.messages[user.id] = messages;
+                    var query_handler = _.partial(getMessagesList, user.id, _);
+                    $q.all(_.map([sent_query, inbox_query, unread_query], query_handler)).then(function (results) {
+                        var SENT_INDEX = 0, INBOX_INDEX = 1, UNREAD_INDEX = 2;
+
                         storage.lastLoad[user.id] = new Date();
-                        aggregate(user.id);
-                        console.debug("storage for user " + user.id + " is updated");
+                        storage["aggregated"]["sent"][user.id] = aggregate(results[SENT_INDEX]);
+                        storage["aggregated"]["inbox"][user.id] = aggregate(results[INBOX_INDEX]);
+                        storage["aggregated"]["unread"][user.id] = aggregate(results[UNREAD_INDEX]);
+
+                        console.debug("messages for user " + user.id + " are updated");
+
                         deferred.resolve();
                     });
+
                 }, function (error) {
                     console.log("error: " + error.toString());
                 });
@@ -55,7 +69,7 @@ angular.module('Messages', [])
             return GApi.executeAuth("gmail", "users.messages.get", params);
         };
 
-        var messagesList = function(userId){ return $q(function(resolve, reject){
+        var getMessagesList = function(userId, query){ return $q(function(resolve, reject){
             var messagesListHandler = function(resp){
                 var ids = _.map(resp.messages, "id");
 
@@ -68,14 +82,14 @@ angular.module('Messages', [])
             messageListPromise.then(messagesListHandler, errorHandler(reject));
         });};
 
-        var aggregate = function(userId){
+        var aggregate = function(messages){
             // report periods: 1 hour, 6 hour, 24 hour
             var one_hour_count = 0, six_hours_count = 0, more_6_hours_count = 0;
             var currentTimestamp = new Date().getTime();
             var deltaSec;
             var HOUR = 3600, HOURS_6 = HOUR * 6;
 
-            _.forEach(storage.messages[userId], function(message){
+            _.forEach(messages, function(message){
                 var msgTimestamp = parseInt(message.internalDate);
                 deltaSec = (currentTimestamp - msgTimestamp) / 1000;
 
@@ -89,7 +103,7 @@ angular.module('Messages', [])
             });
 
 
-            storage["aggregated"][userId] = {
+            return {
                 'one': one_hour_count,
                 'six': six_hours_count,
                 'twentyFour': (more_6_hours_count + six_hours_count + one_hour_count)
@@ -117,9 +131,11 @@ angular.module('Messages', [])
         };
 
         var addUser = function () {
-            // fixme: check if user already exists in list
             GAuth.login().then(function (user) {
-                storage.users.push(user);
+                if(!_.find(storage.users, {'id': user.id})){
+                    storage.users.push(user);
+                    updateStorageForUser(user);
+                }
             });
         };
 
@@ -127,7 +143,9 @@ angular.module('Messages', [])
             _.remove(storage.users, {"id": userId});
             delete storage.aggregated[userId];
             delete storage.lastLoad[userId];
-            delete storage.messages[userId];
+            delete storage.messages['sent'][userId];
+            delete storage.messages['inbox'][userId];
+            delete storage.messages['unread'][userId];
         };
 
         // end API methods and helpers
